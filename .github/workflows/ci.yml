@@ -27,7 +27,7 @@ jobs:
       - name: Package
         run: ditto -c -k --keepParent build/NoBleedingEyes.app build/NoBleedingEyes.zip
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: NoBleedingEyes
           path: build/NoBleedingEyes.zip
