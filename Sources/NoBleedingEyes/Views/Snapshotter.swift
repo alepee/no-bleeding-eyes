@@ -36,7 +36,14 @@ enum Snapshotter {
         host.layoutSubtreeIfNeeded()
         host.display()
 
-        if let bitmap = host.bitmapImageRepForCachingDisplay(in: host.bounds) {
+        // Always @2x, whatever the scale of the screen the offscreen window lands on.
+        let scale = 2
+        if let bitmap = NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(host.bounds.width) * scale, pixelsHigh: Int(host.bounds.height) * scale,
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ) {
+            bitmap.size = host.bounds.size
             host.cacheDisplay(in: host.bounds, to: bitmap)
             try? bitmap.representation(using: .png, properties: [:])?.write(to: url)
         }
