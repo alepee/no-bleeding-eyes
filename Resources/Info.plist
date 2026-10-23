@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>fr</string>
+	<key>CFBundleDisplayName</key>
+	<string>No Bleeding Eyes</string>
+	<key>CFBundleExecutable</key>
+	<string>NoBleedingEyes</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.alepee.NoBleedingEyes</string>
+	<key>CFBundleName</key>
+	<string>No Bleeding Eyes</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSLocationUsageDescription</key>
+	<string>Votre position sert à calculer le lever et le coucher du soleil sur ce Mac.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Votre position sert à calculer le lever et le coucher du soleil sur ce Mac.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Nécessaire pour lire un capteur de luminosité sur votre serveur Home Assistant.</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Nécessaire pour basculer le mode clair / sombre du système.</string>
+</dict>
+</plist>
