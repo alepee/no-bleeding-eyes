@@ -63,7 +63,7 @@ Private APIs are loaded dynamically (`dlopen`, `NSClassFromString`): if a macOS 
 
 ## Distribution
 
-`scripts/build-app.sh` assembles the bundle. `UNIVERSAL=1` builds for arm64 and x86_64, `VERSION` and `BUILD_NUMBER` stamp `Info.plist`, and `SIGN_IDENTITY` signs with the hardened runtime and `Resources/NoBleedingEyes.entitlements` (Apple Events, location). `scripts/package.sh` produces the DMG and the zip, and notarizes them when an App Store Connect API key is provided.
+`scripts/build-app.sh` assembles the bundle. `UNIVERSAL=1` builds for arm64 and x86_64, `VERSION` and `BUILD_NUMBER` stamp `Info.plist`, and `SIGN_IDENTITY` (name or SHA-1) signs with the hardened runtime and `Resources/NoBleedingEyes.entitlements` (Apple Events, location); `SIGN_TIMESTAMP=1` adds the secure timestamp notarization needs. The designated requirement pins the signing certificate, which is why releases use a stable self-signed one: TCC permissions survive updates, which ad-hoc signatures do not guarantee. `scripts/package.sh` produces the DMG and the zip, and notarizes them when an App Store Connect API key is provided.
 
 ## Privacy
 

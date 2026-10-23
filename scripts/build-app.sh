@@ -5,7 +5,9 @@
 #   VERSION          marketing version written to Info.plist (default: value in Resources/Info.plist)
 #   BUILD_NUMBER     CFBundleVersion (default: value in Resources/Info.plist)
 #   UNIVERSAL=1      build for arm64 and x86_64
-#   SIGN_IDENTITY    codesign identity, e.g. "Developer ID Application: …" (default: ad-hoc)
+#   SIGN_IDENTITY    codesign identity, name or SHA-1 (default: ad-hoc). A stable identity, even
+#                    self-signed, keeps macOS permissions across updates.
+#   SIGN_TIMESTAMP=1 request a secure timestamp (required for notarization, Developer ID only)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -28,7 +30,9 @@ plist="$app/Contents/Info.plist"
 [[ -n "${BUILD_NUMBER:-}" ]] && /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$plist"
 
 if [[ -n "${SIGN_IDENTITY:-}" ]]; then
-  codesign --force --timestamp --options runtime \
+  timestamp=()
+  [[ "${SIGN_TIMESTAMP:-0}" == 1 ]] && timestamp=(--timestamp)
+  codesign --force ${timestamp[@]+"${timestamp[@]}"} --options runtime \
     --entitlements Resources/NoBleedingEyes.entitlements \
     --sign "$SIGN_IDENTITY" "$app"
 else

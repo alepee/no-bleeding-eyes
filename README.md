@@ -49,17 +49,17 @@ swift test                      # with Xcode
 
 Push a `vX.Y.Z` tag. The `Release` workflow runs the tests, builds a universal app stamped with the tag version, and publishes `NoBleedingEyes.dmg` and `NoBleedingEyes.zip` to a GitHub release.
 
-Signing and notarization switch on when these repository secrets exist:
+Releases are signed with a self-signed certificate kept in the repository secrets. It does not satisfy Gatekeeper, but its identity stays the same from one version to the next, so macOS keeps the permissions granted to the app (location, Automation, local network) across updates.
 
 | Secret | Content |
 | --- | --- |
-| `MACOS_CERTIFICATE` | Developer ID Application certificate, `.p12` encoded in base64 |
+| `MACOS_CERTIFICATE` | signing certificate, `.p12` encoded in base64 |
 | `MACOS_CERTIFICATE_PASSWORD` | password of the `.p12` |
-| `NOTARY_KEY` | App Store Connect API key, `.p8` encoded in base64 |
-| `NOTARY_KEY_ID` | key ID |
-| `NOTARY_ISSUER` | issuer ID |
+| `NOTARY_KEY` | optional, App Store Connect API key, `.p8` encoded in base64 |
+| `NOTARY_KEY_ID` | optional, key ID |
+| `NOTARY_ISSUER` | optional, issuer ID |
 
-Without them the app is ad-hoc signed.
+Replacing the certificate with a Developer ID Application one and adding the three `NOTARY_*` secrets turns on timestamping and notarization; users then grant permissions once more after that update. Without a certificate the app is ad-hoc signed.
 
 ### Screenshots
 

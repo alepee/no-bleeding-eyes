@@ -33,7 +33,9 @@ rm -f "$dmg"
 hdiutil create -volname "No Bleeding Eyes" -srcfolder "$staging" -fs HFS+ -format UDZO "$dmg"
 
 if [[ -n "${SIGN_IDENTITY:-}" ]]; then
-  codesign --force --timestamp --sign "$SIGN_IDENTITY" "$dmg"
+  timestamp=()
+  [[ "${SIGN_TIMESTAMP:-0}" == 1 ]] && timestamp=(--timestamp)
+  codesign --force ${timestamp[@]+"${timestamp[@]}"} --sign "$SIGN_IDENTITY" "$dmg"
 fi
 [[ -n "${NOTARY_KEY_PATH:-}" ]] && notarize "$dmg"
 
