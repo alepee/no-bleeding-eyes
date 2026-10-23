@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: swift --version
+
+      - name: Test
+        run: swift test
+
+      - name: Build app bundle
+        run: scripts/build-app.sh release
+
+      - name: Package
+        run: ditto -c -k --keepParent build/NoBleedingEyes.app build/NoBleedingEyes.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NoBleedingEyes
+          path: build/NoBleedingEyes.zip
+          retention-days: 14
