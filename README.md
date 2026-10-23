@@ -3,7 +3,7 @@
 [![CI](https://github.com/alepee/no-bleeding-eyes/actions/workflows/ci.yml/badge.svg)](https://github.com/alepee/no-bleeding-eyes/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/alepee/no-bleeding-eyes)](https://github.com/alepee/no-bleeding-eyes/releases/latest)
 
-A macOS menu bar app that tunes your screen to the time of day: light or dark appearance, wallpaper, colour temperature. Inspired by [Solace](https://www.theodorehq.com/solace/).
+A macOS menu bar app that tunes your screen to the time of day: light or dark appearance, wallpaper, colour temperature.
 
 Website: [no-bleeding-eyes.lepee.dev](https://no-bleeding-eyes.lepee.dev)
 
