@@ -24,6 +24,7 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin_path/NoBleedingEyes" "$app/Contents/MacOS/"
 cp Resources/Info.plist "$app/Contents/"
+cp Resources/AppIcon.icns "$app/Contents/Resources/"
 
 plist="$app/Contents/Info.plist"
 [[ -n "${VERSION:-}" ]] && /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION#v}" "$plist"
