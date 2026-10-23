@@ -1,21 +1,22 @@
 # AGENTS.md
 
-App de barre de menus macOS (SwiftUI, package Swift sans projet Xcode). Architecture et intégrations système : [`docs/architecture.md`](docs/architecture.md), à lire avant de toucher à `Engine` ou à `System/`.
+macOS menu bar app (SwiftUI, Swift package without an Xcode project). Architecture and system integrations: [`docs/architecture.md`](docs/architecture.md), read it before touching `Engine` or `System/`.
 
-## Langue
+## Language
 
-Interface et documentation en français ; code, identifiants et commits en anglais. Commits au format Karma : `type(scope): subject`.
+The repository is public: documentation, code, identifiers and commits in English. The user interface is in French. Commits follow the Karma format: `type(scope): subject`.
 
-## Compiler et vérifier
+## Build and verify
 
-- Compiler avec `scripts/build-app.sh debug`. Les Command Line Tools suffisent, mais leurs SDK récents n'embarquent pas les plugins de macros SwiftUI : utiliser `@StateObject` et un `ObservableObject` à la place de `@State`, et éviter toute autre macro (`@Observable`, `#Preview`).
-- Les tests (`swift test`, XCTest) demandent Xcode ; sans Xcode, la CI GitHub les exécute.
-- Vérifier chaque changement d'interface sur des captures : `build/NoBleedingEyes.app/Contents/MacOS/NoBleedingEyes --snapshot <dossier>`, puis regarder les PNG clair et sombre. Une vue ou un panneau ajouté s'inscrit dans `Snapshotter`, et ses données d'exemple dans `Engine.preview()`.
-- Lancer l'app (`open build/NoBleedingEyes.app`) agit sur le vrai système : apparence, gamma, fond d'écran, Night Shift. Le mode `--snapshot` n'y touche pas.
+- Build with `scripts/build-app.sh debug`. The Command Line Tools are enough, but their recent SDKs lack the SwiftUI macro plugins: use `@StateObject` and an `ObservableObject` instead of `@State`, and avoid any other macro (`@Observable`, `#Preview`).
+- Tests (`swift test`, XCTest) need Xcode; without Xcode, GitHub CI runs them.
+- Check every interface change on snapshots: `build/NoBleedingEyes.app/Contents/MacOS/NoBleedingEyes --snapshot <dir>`, then look at the light and dark PNGs. A new view or pane registers in `Snapshotter`, and its sample data in `Engine.preview()`.
+- Launching the app (`open build/NoBleedingEyes.app`) acts on the real system: appearance, gamma, wallpaper, Night Shift. `--snapshot` mode does not.
+- Releases come from `v*` tags (`.github/workflows/release.yml`); the website lives in `site/` and deploys through `.github/workflows/pages.yml`.
 
-## Conventions du code
+## Code conventions
 
-- `Engine` est le seul à appeler `System/`. Les vues lisent l'état publié et passent par les méthodes de `Engine` ou les réglages de `Preferences`.
-- Chaque réglage est une propriété `@Published` de `Preferences`, persistée dans son `didSet` ; un secret va dans le trousseau (`Keychain`).
-- Messages d'erreur destinés à l'utilisateur : une phrase complète qui nomme la cause et, si possible, l'action à faire.
-- Composants d'interface partagés dans `MenuContentView.swift` (`Module`, `ModuleIcon`, `ModeBadge`, `KelvinSlider`, `Notice`) : les réutiliser pour garder le menu et les réglages cohérents.
+- `Engine` is the only caller of `System/`. Views read published state and go through `Engine` methods or `Preferences` settings.
+- Each setting is a `@Published` property of `Preferences`, persisted in its `didSet`; a secret goes in the Keychain (`Keychain`).
+- User-facing error messages: one complete sentence naming the cause and, when possible, the action to take.
+- Shared interface components live in `MenuContentView.swift` (`Module`, `ModuleIcon`, `ModeBadge`, `KelvinSlider`, `Notice`): reuse them to keep the menu and settings consistent.

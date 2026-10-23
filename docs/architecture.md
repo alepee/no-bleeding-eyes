@@ -1,66 +1,70 @@
 # Architecture
 
-## Vue d'ensemble
+## Overview
 
 ```
-App.swift                  MenuBarExtra + fenêtre de réglages, AppDelegate (démarrage, arrêt, --snapshot)
+App.swift                  MenuBarExtra + settings window, AppDelegate (launch, shutdown, --snapshot)
 Core/
-  Engine.swift             moteur de décision, seul à agir sur le système
-  Preferences.swift        réglages persistés (UserDefaults, jeton HA dans le trousseau)
-  SolarCalculator.swift    lever / coucher du soleil (équation NOAA)
-  LocationProvider.swift   position CoreLocation mise en cache
-  WeatherService.swift     prévision Open-Meteo, codes WMO
-  HomeAssistantClient.swift  API REST Home Assistant, trousseau
+  Engine.swift             decision engine, the only part that acts on the system
+  Preferences.swift        persisted settings (UserDefaults, Home Assistant token in the Keychain)
+  SolarCalculator.swift    sunrise / sunset (NOAA equation)
+  LocationProvider.swift   cached CoreLocation position
+  WeatherService.swift     Open-Meteo forecast, WMO codes
+  HomeAssistantClient.swift  Home Assistant REST API, Keychain
 System/
-  SystemAppearance.swift   lecture et bascule clair / sombre
-  Wallpaper.swift          fonds d'écran par écran
-  Warmth.swift             température de couleur : gamma, filtre superposé, Night Shift
-  HotKeyCenter.swift       raccourcis globaux (Carbon)
+  SystemAppearance.swift   read and switch light / dark
+  Wallpaper.swift          per-display wallpapers
+  Warmth.swift             colour temperature: gamma, overlay, Night Shift
+  HotKeyCenter.swift       global shortcuts (Carbon)
 Views/
-  MenuContentView.swift    menu et composants partagés (Module, ModuleIcon, KelvinSlider…)
-  SettingsView.swift       réglages en barre latérale, un panneau par fonction
-  Snapshotter.swift        rendu PNG des vues (debug uniquement)
+  MenuContentView.swift    menu and shared components (Module, ModuleIcon, KelvinSlider…)
+  SettingsView.swift       sidebar settings, one pane per feature
+  Snapshotter.swift        PNG rendering of the views (debug only)
 ```
 
-## Moteur de décision
+## Decision engine
 
-`Engine` exécute un **tick** toutes les 15 secondes, à chaque changement de réglage ou de position, au réveil et à chaque reconfiguration des écrans. Un tick est idempotent : il recalcule l'état voulu à partir de l'heure, des réglages et des dernières mesures, puis n'agit que sur ce qui diffère.
+`Engine` runs a **tick** every 15 seconds, on every settings or location change, on wake and on every display reconfiguration. A tick is idempotent: it recomputes the desired state from the time, the settings and the latest readings, then only acts on what differs.
 
-Ordre d'un tick :
+Tick order:
 
-1. Horaires solaires du jour, rafraîchissement de la position si elle a plus de 6 h.
-2. Météo : nouvelle requête toutes les 30 minutes. La **première prévision du jour** fixe la décision « journée sombre », pour que l'écran ne bascule pas au gré des mises à jour.
-3. Luminosité ambiante : lecture du capteur toutes les 30 secondes, puis hystérésis (seuil sombre, seuil clair) et délai de confirmation.
-4. Apparence : état prévu par le planning, puis forçage manuel éventuel.
-5. Fond d'écran correspondant au mode, appliqué seulement s'il a changé.
-6. Chaleur : facteur 0 → 1 en fondu depuis l'heure de début, puis 1 → 0 après le lever.
-7. Raccourcis clavier, enregistrés ou retirés selon le réglage.
+1. Today's solar times; location refresh if older than 6 h.
+2. Weather: new request every 30 minutes. The **first forecast of the day** sets the "dark day" decision, so the screen does not flip with every update.
+3. Ambient light: sensor read every 30 seconds, then hysteresis (dark threshold, light threshold) and confirmation delay.
+4. Appearance: state planned by the schedule, then any manual override.
+5. Wallpaper matching the mode, applied only when it changed.
+6. Warmth: factor 0 → 1 fading in from the start time, then 1 → 0 after sunrise.
+7. Keyboard shortcuts, registered or removed according to the setting.
 
-### Forçage manuel
+### Manual override
 
-Une bascule depuis le menu, le raccourci ou les Réglages Système crée un **forçage**. L'état du planning au moment de la bascule est mémorisé ; le forçage tombe dès que le planning change d'état (lever, coucher, journée sombre, seuil de lux franchi). Même mécanisme pour la chaleur.
+A toggle from the menu, the shortcut or System Settings creates an **override**. The schedule state at the time of the toggle is remembered; the override drops as soon as the schedule changes state (sunrise, sunset, dark day, lux threshold crossed). Warmth works the same way.
 
-### Replis
+### Fallbacks
 
-- Sans position : horaires fixes.
-- Soleil absent (nuit ou jour polaire) : horaires fixes.
-- Capteur Home Assistant muet depuis 10 minutes : planning solaire.
+- No location: fixed times.
+- No sun (polar night or day): fixed times.
+- Home Assistant sensor silent for 10 minutes: solar schedule.
 
-## Intégrations système
+## System integrations
 
-| Fonction | Mécanisme | Autorisation |
+| Feature | Mechanism | Permission |
 | --- | --- | --- |
-| Clair / sombre | `SLSSetAppearanceThemeLegacy` (SkyLight, privée), repli AppleScript via System Events | aucune, ou Automatisation pour le repli |
-| Fonds d'écran | `NSWorkspace.setDesktopImageURL`, bureau actif de chaque écran seulement | aucune |
-| Chaleur, rendu standard | tables gamma (`CGSetDisplayTransferByTable`), calibrage ColorSync restauré à l'arrêt et au lancement | aucune |
-| Chaleur, rendu compatibilité | fenêtre ambre transparente au-dessus de tout, qui laisse passer les clics | aucune |
-| Night Shift | `CBBlueLightClient` (CoreBrightness, privée) | aucune |
-| Raccourcis | `RegisterEventHotKey` (Carbon) | aucune |
-| Position | CoreLocation, précision au kilomètre | Service de localisation |
-| Home Assistant | `GET /api/config`, `/api/states`, `/api/states/<entité>` avec jeton Bearer | Réseau local si l'URL est locale |
+| Light / dark | `SLSSetAppearanceThemeLegacy` (SkyLight, private), AppleScript fallback through System Events | none, or Automation for the fallback |
+| Wallpapers | `NSWorkspace.setDesktopImageURL`, active desktop of each display only | none |
+| Warmth, standard rendering | gamma tables (`CGSetDisplayTransferByTable`), ColorSync calibration restored on quit and launch | none |
+| Warmth, compatibility rendering | transparent amber window above everything, click-through | none |
+| Night Shift | `CBBlueLightClient` (CoreBrightness, private) | none |
+| Shortcuts | `RegisterEventHotKey` (Carbon) | none |
+| Location | CoreLocation, kilometre accuracy | Location Services |
+| Home Assistant | `GET /api/config`, `/api/states`, `/api/states/<entity>` with a Bearer token | Local Network if the URL is local |
 
-Les API privées sont chargées dynamiquement (`dlopen`, `NSClassFromString`) : si une mise à jour de macOS les retire, la fonction se désactive sans planter.
+Private APIs are loaded dynamically (`dlopen`, `NSClassFromString`): if a macOS update removes them, the feature turns off without crashing.
 
-## Confidentialité
+## Distribution
 
-Aucun compte ni télémétrie. La position sert au calcul solaire sur le Mac et au nom de ville (géocodage Apple). Seule la météo, si elle est activée, envoie une position arrondie à 0,01° à Open-Meteo.
+`scripts/build-app.sh` assembles the bundle. `UNIVERSAL=1` builds for arm64 and x86_64, `VERSION` and `BUILD_NUMBER` stamp `Info.plist`, and `SIGN_IDENTITY` signs with the hardened runtime and `Resources/NoBleedingEyes.entitlements` (Apple Events, location). `scripts/package.sh` produces the DMG and the zip, and notarizes them when an App Store Connect API key is provided.
+
+## Privacy
+
+No account, no telemetry. The location feeds the solar computation on the Mac and the city name (Apple geocoding). Only the weather, when enabled, sends a location rounded to 0.01° to Open-Meteo.

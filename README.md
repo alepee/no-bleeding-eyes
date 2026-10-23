@@ -1,56 +1,85 @@
 # No Bleeding Eyes
 
 [![CI](https://github.com/alepee/no-bleeding-eyes/actions/workflows/ci.yml/badge.svg)](https://github.com/alepee/no-bleeding-eyes/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/alepee/no-bleeding-eyes)](https://github.com/alepee/no-bleeding-eyes/releases/latest)
 
-App de barre de menus macOS qui accorde l'écran au moment de la journée : mode clair ou sombre, fond d'écran, température de couleur. Inspirée de [Solace](https://www.theodorehq.com/solace/).
+A macOS menu bar app that tunes your screen to the time of day: light or dark appearance, wallpaper, colour temperature. Inspired by [Solace](https://www.theodorehq.com/solace/).
+
+Website: [no-bleeding-eyes.lepee.dev](https://no-bleeding-eyes.lepee.dev)
 
 <p>
-  <img src="docs/screenshots/menu-light.png" width="300" alt="Menu, mode clair">
-  <img src="docs/screenshots/menu-dark.png" width="300" alt="Menu, mode sombre">
+  <img src="docs/screenshots/menu-light.png" width="300" alt="Menu, light mode">
+  <img src="docs/screenshots/menu-dark.png" width="300" alt="Menu, dark mode">
 </p>
 
-## Fonctionnalités
+## Features
 
-- **Planning clair / sombre** : lever et coucher du soleil calculés sur le Mac, avec un décalage de ±2 h pour chacun ; ou horaires fixes ; ou manuel.
-- **Météo** : la première prévision du jour décide si toute la journée passe en sombre (couverture nuageuse moyenne au-dessus d'un seuil, ou orage). Affiche ciel, température (°C/°F), nuages, pluie et UV. Données [Open-Meteo](https://open-meteo.com), position arrondie à 1 km environ.
-- **Luminosité ambiante (Home Assistant)** : un capteur de lux pilote le mode. Deux seuils (hystérésis) et un délai de confirmation évitent le clignotement. Retour au soleil si le capteur ne répond plus pendant 10 minutes. Jeton stocké dans le trousseau.
-- **Fonds d'écran** : un pour le mode clair, un pour le mode sombre, appliqués sur tous les écrans.
-- **Chaleur du soir** : transition progressive de 6500 K vers la température choisie (jusqu'à 1900 K), au coucher du soleil, à heure fixe ou en continu ; retour au neutre après le lever. Rendu par table gamma, ou par filtre superposé pour les écrans qui ignorent le gamma. Night Shift est suspendu pendant ce temps pour ne pas cumuler les filtres.
-- **Raccourcis globaux** : `⌃⌥⌘D` bascule clair / sombre, `⌃⌥⌘W` bascule la chaleur. Une bascule manuelle (ou un changement fait dans les Réglages Système) tient jusqu'au prochain changement prévu.
-- Lancement à l'ouverture de session, multi-écrans, aucun compte, aucune télémétrie.
+- **Light / dark schedule**: sunrise and sunset computed on your Mac, each with a ±2 h offset; or fixed times; or manual.
+- **Weather**: the first forecast of the day decides whether the whole day stays dark (mean cloud cover above a threshold, or a thunderstorm). Shows sky, temperature (°C/°F), clouds, rain and UV. Data from [Open-Meteo](https://open-meteo.com), location rounded to about 1 km.
+- **Ambient light (Home Assistant)**: a lux sensor drives the appearance. Two thresholds (hysteresis) and a confirmation delay prevent flicker. Falls back to the sun when the sensor goes silent for 10 minutes. The token is stored in the Keychain.
+- **Wallpapers**: one for light mode, one for dark mode, applied to every display.
+- **Evening warmth**: a gradual shift from 6500 K to the temperature you pick (down to 1900 K), at sunset, at a fixed time or all the time; back to neutral after sunrise. Rendered through gamma tables, or through an overlay for displays that ignore gamma. Night Shift is paused meanwhile so filters do not stack.
+- **Global shortcuts**: `⌃⌥⌘D` toggles light / dark, `⌃⌥⌘W` toggles warmth. A manual toggle (or a change made in System Settings) holds until the next scheduled change.
+- Launch at login, multiple displays, no account, no telemetry.
 
-## Installation
+The interface is in French for now.
 
-Télécharger le zip d'une [release](https://github.com/alepee/no-bleeding-eyes/releases) ou l'artefact du dernier passage de la CI, puis glisser l'app dans `/Applications`. L'app n'est pas notariée : au premier lancement, clic droit › Ouvrir.
+## Install
 
-## Développement
+Download `NoBleedingEyes.dmg` from the [latest release](https://github.com/alepee/no-bleeding-eyes/releases/latest) and drag the app into `Applications`. Requires macOS 13 or later, Apple Silicon or Intel.
 
-macOS 13 minimum. Les Command Line Tools suffisent pour compiler ; les tests demandent Xcode (XCTest n'est pas fourni avec les Command Line Tools).
+Releases are not notarized yet. On first launch macOS refuses to open the app: go to **System Settings › Privacy & Security** and click **Open Anyway**, or run:
 
 ```sh
-scripts/build-app.sh            # build release → build/NoBleedingEyes.app (signature ad hoc)
-scripts/build-app.sh debug
-open build/NoBleedingEyes.app
-swift test                      # avec Xcode
+xattr -dr com.apple.quarantine /Applications/NoBleedingEyes.app
 ```
 
-Publier une version : pousser un tag `vX.Y.Z`, le workflow `Release` crée la release GitHub avec le zip.
+## Development
 
-### Captures d'écran
+macOS 13 minimum. The Command Line Tools are enough to build; tests need Xcode (XCTest does not ship with the Command Line Tools).
 
-Les builds debug rendent chaque vue en PNG, en clair et en sombre, avec des données d'exemple et sans toucher au système :
+```sh
+scripts/build-app.sh            # release build → build/NoBleedingEyes.app (ad-hoc signed)
+scripts/build-app.sh debug
+open build/NoBleedingEyes.app
+swift test                      # with Xcode
+```
+
+### Releasing
+
+Push a `vX.Y.Z` tag. The `Release` workflow runs the tests, builds a universal app stamped with the tag version, and publishes `NoBleedingEyes.dmg` and `NoBleedingEyes.zip` to a GitHub release.
+
+Signing and notarization switch on when these repository secrets exist:
+
+| Secret | Content |
+| --- | --- |
+| `MACOS_CERTIFICATE` | Developer ID Application certificate, `.p12` encoded in base64 |
+| `MACOS_CERTIFICATE_PASSWORD` | password of the `.p12` |
+| `NOTARY_KEY` | App Store Connect API key, `.p8` encoded in base64 |
+| `NOTARY_KEY_ID` | key ID |
+| `NOTARY_ISSUER` | issuer ID |
+
+Without them the app is ad-hoc signed.
+
+### Screenshots
+
+Debug builds render every view to PNG, in light and dark, with sample data and without touching the system:
 
 ```sh
 scripts/build-app.sh debug
 build/NoBleedingEyes.app/Contents/MacOS/NoBleedingEyes --snapshot docs/screenshots
 ```
 
-| Planning | Home Assistant | Chaleur du soir |
+| Schedule | Home Assistant | Evening warmth |
 | --- | --- | --- |
 | ![](docs/screenshots/settings-schedule-light.png) | ![](docs/screenshots/settings-homeAssistant-light.png) | ![](docs/screenshots/settings-warmth-light.png) |
-| **Météo** | **Fonds d'écran** | **Général** |
+| **Weather** | **Wallpapers** | **General** |
 | ![](docs/screenshots/settings-weather-dark.png) | ![](docs/screenshots/settings-wallpaper-dark.png) | ![](docs/screenshots/settings-general-dark.png) |
 
 ## Documentation
 
-- [Architecture](docs/architecture.md) : moteur de décision, intégrations système, API privées.
+- [Architecture](docs/architecture.md): decision engine, system integrations, private APIs.
+
+## Support
+
+If the app saves your eyes, you can [sponsor its development](https://github.com/sponsors/alepee).
