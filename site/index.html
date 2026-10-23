@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>No Bleeding Eyes, a Mac screen that follows the sun</title>
+<meta name="description" content="Free macOS menu bar app: light and dark mode on sunrise and sunset, dark days when the sky is grey, a Home Assistant light sensor, matching wallpapers and evening warmth.">
+<meta property="og:title" content="No Bleeding Eyes">
+<meta property="og:description" content="A Mac screen that follows the sun.">
+<meta property="og:image" content="https://no-bleeding-eyes.lepee.dev/screenshots/menu-light.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='%23ffb46b'/></svg>">
+<style>
+  :root {
+    --sky: #f4f8fd;
+    --ink: #17233a;
+    --muted: #4c5a72;
+    --amber: #ffb46b;
+    --candle: #ff8a3d;
+    --night: #1c1f3f;
+    --moon: #cfd2f6;
+    --bg: var(--sky);
+    --fg: var(--ink);
+    --fg-soft: var(--muted);
+    --measure: 34rem;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 400 1.0625rem/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-underline-offset: .2em; }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--candle); outline-offset: 3px; border-radius: 6px; }
+  img { max-width: 100%; height: auto; display: block; }
+
+  .wrap { width: min(72rem, 100% - 3rem); margin-inline: auto; }
+
+  /* Hero */
+  .hero { min-height: 92vh; display: grid; align-content: center; padding-block: 4rem; }
+  .hero-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 3rem; align-items: center; }
+  h1 {
+    font: 700 clamp(3rem, 8vw, 6.5rem)/.92 -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    letter-spacing: -.045em;
+    margin: 0 0 1.5rem;
+    background: linear-gradient(100deg, #8fb4ff 0%, var(--ink) 30%, var(--ink) 55%, var(--candle) 85%, #c94f1d 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lede { font-size: 1.3rem; line-height: 1.45; max-width: 28rem; margin: 0 0 2rem; color: var(--fg-soft); }
+  .actions { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center; }
+  .download {
+    display: inline-flex; align-items: center; gap: .6rem;
+    padding: .9rem 1.4rem; border-radius: 999px;
+    background: var(--ink); color: var(--sky); text-decoration: none; font-weight: 600;
+  }
+  .download:hover { background: #24345a; }
+  .fine { font-size: .875rem; color: var(--fg-soft); }
+
+  .menus { position: relative; height: 27rem; }
+  .menus img { position: absolute; width: 19rem; border-radius: 14px; box-shadow: 0 30px 60px -20px rgba(23, 35, 58, .45); }
+  .menus .day { top: 0; left: 0; }
+  .menus .night { top: 6rem; left: 9rem; }
+
+  /* The day: the page background follows the hours as you scroll */
+  .day-cycle { padding-block: 6rem 4rem; }
+  .moment { min-height: 70vh; display: grid; grid-template-columns: 9rem 1fr; gap: 2rem; align-content: center; }
+  .moment time { font: 600 1.6rem/1 ui-rounded, -apple-system, sans-serif; font-variant-numeric: tabular-nums; padding-top: .35rem; color: var(--fg-soft); }
+  .moment h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 1.05; letter-spacing: -.03em; margin: 0 0 1rem; }
+  .moment p { max-width: var(--measure); margin: 0; color: var(--fg-soft); }
+  .moment .kelvin { display: inline-block; margin-top: 1.2rem; font-size: .95rem; font-weight: 600; color: var(--fg); }
+
+  /* Settings */
+  .settings { padding-block: 6rem; }
+  .settings h2, .closing h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -.03em; line-height: 1.05; margin: 0 0 1rem; }
+  .settings > .wrap > p { max-width: var(--measure); color: var(--fg-soft); margin: 0 0 3rem; }
+  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem 1.5rem; margin: 0; padding: 0; list-style: none; }
+  .shots img { border-radius: 10px; box-shadow: 0 18px 40px -22px rgba(0, 0, 0, .55); }
+  .shots figcaption { margin-top: .7rem; font-weight: 600; }
+  .shots figcaption span { display: block; font-weight: 400; font-size: .9rem; color: var(--fg-soft); }
+
+  .closing { padding-block: 6rem 4rem; }
+  .closing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3rem; }
+  .closing h3 { font-size: 1.15rem; margin: 0 0 .5rem; }
+  .closing p { margin: 0; color: var(--fg-soft); }
+  code { font: .9em ui-monospace, "SF Mono", Menlo, monospace; background: rgba(127, 127, 160, .18); padding: .1em .35em; border-radius: 4px; }
+  .sponsor {
+    display: inline-block; margin-top: 1rem; padding: .6rem 1.1rem; border-radius: 999px;
+    border: 1.5px solid currentColor; text-decoration: none; font-weight: 600;
+  }
+  footer { padding-block: 2rem 3rem; font-size: .875rem; color: var(--fg-soft); }
+
+  @media (max-width: 52rem) {
+    .hero-grid, .closing-grid { grid-template-columns: 1fr; }
+    .menus { height: 22rem; }
+    .menus img { width: 15rem; }
+    .menus .night { left: 5rem; top: 5rem; }
+    .moment { grid-template-columns: 1fr; gap: .5rem; min-height: 55vh; }
+    .shots { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 34rem) { .shots { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>No Bleeding Eyes</h1>
+      <p class="lede">Your Mac follows the sun. Light when the day starts, dark when it ends, and a warmer screen as the evening goes on.</p>
+      <div class="actions">
+        <a class="download" href="https://github.com/alepee/no-bleeding-eyes/releases/latest/download/NoBleedingEyes.dmg">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11 3h2v10.6l3.8-3.8 1.4 1.4L12 17.4l-6.2-6.2 1.4-1.4 3.8 3.8zM4 19h16v2H4z"/></svg>
+          Download for Mac
+        </a>
+        <span class="fine">Free and open source. macOS 13 or later, Apple Silicon and Intel.</span>
+      </div>
+    </div>
+    <div class="menus">
+      <img class="day" src="screenshots/menu-light.png" width="320" height="330" alt="The menu in light mode: light until sunset, weather, evening warmth starting at sunset">
+      <img class="night" src="screenshots/menu-dark.png" width="320" height="330" alt="The same menu in dark mode">
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="day-cycle" aria-label="A day with No Bleeding Eyes">
+    <div class="wrap">
+      <article class="moment" data-k="6500">
+        <time>07:42</time>
+        <div>
+          <h2>The sun is up, so is your screen.</h2>
+          <p>Sunrise and sunset are computed on your Mac from your location. Shift each one by up to two hours, or pick fixed times if you prefer a routine to the sky.</p>
+        </div>
+      </article>
+      <article class="moment" data-k="5200">
+        <time>10:15</time>
+        <div>
+          <h2>Grey sky, dark day.</h2>
+          <p>The first forecast of the morning decides. When clouds cover the sky or a storm is coming, the whole day stays dark, without flipping back and forth at each update.</p>
+        </div>
+      </article>
+      <article class="moment" data-k="4600">
+        <time>14:30</time>
+        <div>
+          <h2>Or ask the room.</h2>
+          <p>Connect a light sensor from Home Assistant and let the actual brightness around you choose. Two thresholds and a short delay keep a passing cloud from switching anything.</p>
+        </div>
+      </article>
+      <article class="moment" data-k="3400">
+        <time>19:58</time>
+        <div>
+          <h2>Sunset changes everything at once.</h2>
+          <p>Dark mode turns on and your night wallpaper takes over on every display. Changed your mind? <code>⌃⌥⌘D</code> flips it until the next scheduled change.</p>
+        </div>
+      </article>
+      <article class="moment" data-k="2200">
+        <time>22:10</time>
+        <div>
+          <h2>Then the screen warms up.</h2>
+          <p>Colour temperature slides slowly from daylight to the warmth you chose, down to candlelight. Night Shift steps aside so the two filters never stack, and everything returns to neutral after sunrise.</p>
+          <span class="kelvin">6500 K to 1900 K</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="settings" aria-labelledby="settings-title">
+    <div class="wrap">
+      <h2 id="settings-title">One pane per idea.</h2>
+      <p>Everything lives in the menu bar. Settings open in a single window, light or dark like the rest of your Mac.</p>
+      <ul class="shots">
+        <li><figure><img src="screenshots/settings-schedule-light.png" loading="lazy" alt="Schedule settings"><figcaption>Schedule <span>Sun, fixed times or manual</span></figcaption></figure></li>
+        <li><figure><img src="screenshots/settings-weather-light.png" loading="lazy" alt="Weather settings"><figcaption>Weather <span>Cloud threshold for dark days</span></figcaption></figure></li>
+        <li><figure><img src="screenshots/settings-homeAssistant-light.png" loading="lazy" alt="Home Assistant settings"><figcaption>Home Assistant <span>Server, token and lux sensor</span></figcaption></figure></li>
+        <li><figure><img src="screenshots/settings-wallpaper-dark.png" loading="lazy" alt="Wallpaper settings"><figcaption>Wallpapers <span>One for the day, one for the night</span></figcaption></figure></li>
+        <li><figure><img src="screenshots/settings-warmth-dark.png" loading="lazy" alt="Warmth settings"><figcaption>Evening warmth <span>Start time, target and rendering</span></figcaption></figure></li>
+        <li><figure><img src="screenshots/settings-general-dark.png" loading="lazy" alt="General settings"><figcaption>General <span>Shortcuts and launch at login</span></figcaption></figure></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="closing" aria-label="Privacy, install and support">
+    <div class="wrap closing-grid">
+      <div>
+        <h3>Nothing leaves your Mac</h3>
+        <p>No account, no analytics. Only the weather, if you turn it on, sends a location rounded to about a kilometre to <a href="https://open-meteo.com">Open-Meteo</a>.</p>
+      </div>
+      <div>
+        <h3>First launch</h3>
+        <p>Builds are not notarized yet. If macOS refuses to open the app, click <em>Open Anyway</em> in System Settings › Privacy &amp; Security.</p>
+      </div>
+      <div>
+        <h3>Keep it going</h3>
+        <p>The code is on <a href="https://github.com/alepee/no-bleeding-eyes">GitHub</a>. If the app is kind to your eyes, you can sponsor its development.</p>
+        <a class="sponsor" href="https://github.com/sponsors/alepee">Sponsor on GitHub</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Made by <a href="https://github.com/alepee">Antoine Lépée</a>. Inspired by Solace.</div>
+</footer>
+
+<script>
+  // Scrolling through the day section moves the page through the hours:
+  // daylight, overcast, afternoon, sunset amber, then candlelit night.
+  const stops = [
+    { at: 0.00, bg: [244, 248, 253], fg: [23, 35, 58], soft: [76, 90, 114] },
+    { at: 0.22, bg: [224, 230, 238], fg: [23, 35, 58], soft: [76, 90, 114] },
+    { at: 0.45, bg: [250, 240, 222], fg: [40, 32, 24], soft: [96, 80, 64] },
+    { at: 0.68, bg: [255, 196, 140], fg: [52, 26, 10], soft: [96, 56, 30] },
+    { at: 0.90, bg: [42, 30, 52], fg: [255, 214, 176], soft: [230, 180, 140] },
+    { at: 1.00, bg: [28, 31, 63], fg: [236, 236, 250], soft: [207, 210, 246] },
+  ];
+  const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  const rgb = (c) => `rgb(${c.join(",")})`;
+  const cycle = document.querySelector(".day-cycle");
+  const root = document.documentElement.style;
+
+  function paint() {
+    const rect = cycle.getBoundingClientRect();
+    const span = rect.height;
+    const p = Math.min(1, Math.max(0, (innerHeight * 0.5 - rect.top) / span));
+    let i = stops.findIndex((s) => s.at >= p);
+    if (i <= 0) i = 1;
+    const a = stops[i - 1], b = stops[i];
+    const t = (p - a.at) / (b.at - a.at);
+    root.setProperty("--bg", rgb(mix(a.bg, b.bg, t)));
+    root.setProperty("--fg", rgb(mix(a.fg, b.fg, t)));
+    root.setProperty("--fg-soft", rgb(mix(a.soft, b.soft, t)));
+  }
+  addEventListener("scroll", paint, { passive: true });
+  addEventListener("resize", paint);
+  paint();
+</script>
+</body>
+</html>
