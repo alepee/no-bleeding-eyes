@@ -59,6 +59,8 @@
   }
   .download:hover { background: #24345a; }
   .fine { font-size: .875rem; color: var(--fg-soft); }
+  .brew { margin: 1.5rem 0 0; }
+  .brew code { user-select: all; }
 
   .menus { position: relative; height: 27rem; }
   .menus img { position: absolute; width: 19rem; border-radius: 14px; box-shadow: 0 30px 60px -20px rgba(23, 35, 58, .45); }
@@ -118,6 +120,7 @@
         </a>
         <span class="fine">Free and open source. macOS 13 or later, Apple Silicon and Intel.</span>
       </div>
+      <p class="fine brew">Or with Homebrew: <code>brew install --cask alepee/tap/no-bleeding-eyes</code></p>
     </div>
     <div class="menus">
       <img class="day" src="screenshots/menu-light.png" width="320" height="330" alt="The menu in light mode: light until sunset, weather, evening warmth starting at sunset">

@@ -26,7 +26,13 @@ The interface is in French for now.
 
 ## Install
 
-Download `NoBleedingEyes.dmg` from the [latest release](https://github.com/alepee/no-bleeding-eyes/releases/latest) and drag the app into `Applications`. Requires macOS 13 or later, Apple Silicon or Intel.
+With [Homebrew](https://brew.sh):
+
+```sh
+brew install --cask alepee/tap/no-bleeding-eyes
+```
+
+Or download `NoBleedingEyes.dmg` from the [latest release](https://github.com/alepee/no-bleeding-eyes/releases/latest) and drag the app into `Applications`. Requires macOS 13 or later, Apple Silicon or Intel.
 
 Releases are not notarized yet. On first launch macOS refuses to open the app: go to **System Settings › Privacy & Security** and click **Open Anyway**, or run:
 
@@ -47,7 +53,7 @@ swift test                      # with Xcode
 
 ### Releasing
 
-Push a `vX.Y.Z` tag. The `Release` workflow runs the tests, builds a universal app stamped with the tag version, and publishes `NoBleedingEyes.dmg` and `NoBleedingEyes.zip` to a GitHub release.
+Push a `vX.Y.Z` tag. The `Release` workflow runs the tests, builds a universal app stamped with the tag version, and publishes `NoBleedingEyes.dmg` and `NoBleedingEyes.zip` to a GitHub release, then bumps the cask in [alepee/homebrew-tap](https://github.com/alepee/homebrew-tap) through the `TAP_DEPLOY_KEY` deploy key (skipped for pre-release tags).
 
 Releases are signed with a self-signed certificate kept in the repository secrets. It does not satisfy Gatekeeper, but its identity stays the same from one version to the next, so macOS keeps the permissions granted to the app (location, Automation, local network) across updates.
 
