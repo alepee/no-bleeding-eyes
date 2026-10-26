@@ -28,7 +28,6 @@ final class Engine: ObservableObject {
     @Published private(set) var currentKelvin = ColorTemperature.neutral
     /// Next time evening warmth starts fading in, when it is currently off.
     @Published private(set) var nextWarmthStart: Date?
-    @Published private(set) var isAppearanceOverridden = false
     @Published private(set) var appearanceError: String?
     @Published private(set) var ambientLux: Double?
     @Published private(set) var ambientError: String?
@@ -44,9 +43,6 @@ final class Engine: ObservableObject {
     private let gamma = GammaWarmth()
     private let overlay = OverlayWarmth()
 
-    /// Forced appearance, kept until the schedule itself changes state.
-    private var appearanceOverride: Bool?
-    private var appearanceOverrideBaseline: Bool?
     private var lastAppliedDark: Bool?
 
     private var warmthOverride: Bool?
@@ -159,20 +155,13 @@ final class Engine: ObservableObject {
 
     // MARK: - User actions
 
-    func setAppearance(dark: Bool) {
-        let scheduled = scheduledDark(at: Date())
-        if scheduled == nil || scheduled == dark {
-            appearanceOverride = nil
-        } else {
-            appearanceOverride = dark
-            appearanceOverrideBaseline = scheduled
-        }
-        if prefs.scheduleMode == .manual { applyAppearance(dark) }
+    func setAppearance(_ choice: AppearanceChoice) {
+        prefs.appearanceChoice = choice
         tick()
     }
 
     func toggleAppearance() {
-        setAppearance(dark: !SystemAppearance.isDark)
+        setAppearance(SystemAppearance.isDark ? .light : .dark)
     }
 
     func toggleWarmth() {
@@ -236,22 +225,23 @@ final class Engine: ObservableObject {
         let scheduled = scheduledDark(at: now)
         let systemDark = SystemAppearance.isDark
 
-        // A change made outside the app (System Settings, Control Centre) counts as an override.
-        if let lastAppliedDark, systemDark != lastAppliedDark, appearanceOverride == nil, scheduled != nil {
-            appearanceOverride = systemDark
-            appearanceOverrideBaseline = scheduled
-        }
-        if scheduled == nil || scheduled != appearanceOverrideBaseline {
-            appearanceOverride = nil
+        // A change made outside the app (System Settings, Control Centre) away from the schedule pins that appearance.
+        if let lastAppliedDark, systemDark != lastAppliedDark, prefs.appearanceChoice == .auto,
+           let scheduled, systemDark != scheduled {
+            prefs.appearanceChoice = systemDark ? .dark : .light
         }
 
-        let desired = appearanceOverride ?? scheduled ?? systemDark
+        let pinned: Bool? = switch prefs.appearanceChoice {
+        case .light: false
+        case .dark: true
+        case .auto: nil
+        }
+        let desired = pinned ?? scheduled ?? systemDark
         if desired != systemDark {
             applyAppearance(desired)
         }
         lastAppliedDark = SystemAppearance.isDark
         isDark = lastAppliedDark ?? desired
-        isAppearanceOverridden = appearanceOverride != nil
         nextTransition = computeNextTransition(after: now)
     }
 
@@ -264,7 +254,7 @@ final class Engine: ObservableObject {
     }
 
     private func computeNextTransition(after now: Date) -> Transition? {
-        guard prefs.scheduleMode != .manual else { return nil }
+        guard prefs.scheduleMode != .manual, prefs.appearanceChoice == .auto else { return nil }
         if prefs.scheduleMode == .ambient, isAmbientLive(at: now), ambientDark != nil { return nil }
         let candidates = (0...1).flatMap { offset -> [Transition] in
             let day = calendar.date(byAdding: .day, value: offset, to: now) ?? now

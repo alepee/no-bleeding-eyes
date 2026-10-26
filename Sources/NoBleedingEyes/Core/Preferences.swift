@@ -18,6 +18,15 @@ enum ScheduleMode: String, CaseIterable, Identifiable {
     }
 }
 
+/// What the menu picker pins: a fixed appearance, or `auto` to follow the schedule (sun, hours, light sensor).
+enum AppearanceChoice: String, CaseIterable, Identifiable {
+    case light
+    case dark
+    case auto
+
+    var id: String { rawValue }
+}
+
 enum WarmthStart: String, CaseIterable, Identifiable {
     case sunset
     case customTime
@@ -55,6 +64,8 @@ final class Preferences: ObservableObject {
 
     // Appearance schedule
     @Published var scheduleMode: ScheduleMode { didSet { defaults.set(scheduleMode.rawValue, forKey: "scheduleMode") } }
+    /// Pinned appearance, kept until the user picks `auto` again.
+    @Published var appearanceChoice: AppearanceChoice { didSet { defaults.set(appearanceChoice.rawValue, forKey: "appearanceChoice") } }
     /// Minutes added to sunrise / sunset, in -120...120.
     @Published var sunriseOffset: Int { didSet { defaults.set(sunriseOffset, forKey: "sunriseOffset") } }
     @Published var sunsetOffset: Int { didSet { defaults.set(sunsetOffset, forKey: "sunsetOffset") } }
@@ -104,6 +115,7 @@ final class Preferences: ObservableObject {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         scheduleMode = ScheduleMode(rawValue: defaults.string(forKey: "scheduleMode") ?? "") ?? .solar
+        appearanceChoice = AppearanceChoice(rawValue: defaults.string(forKey: "appearanceChoice") ?? "") ?? .auto
         sunriseOffset = Self.value(defaults, "sunriseOffset", 0)
         sunsetOffset = Self.value(defaults, "sunsetOffset", 0)
         lightTime = Self.value(defaults, "lightTime", 7 * 60)

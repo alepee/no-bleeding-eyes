@@ -42,12 +42,12 @@ struct MenuContentView: View {
 
     private var statusTitle: String {
         let mode = engine.isDark ? "Sombre" : "Clair"
-        guard let next = engine.nextTransition, !engine.isAppearanceOverridden else { return "Mode \(mode.lowercased())" }
+        guard let next = engine.nextTransition else { return "Mode \(mode.lowercased())" }
         return "\(mode) jusqu'à \(next.date.shortTime)"
     }
 
     private var statusReason: String {
-        if engine.isAppearanceOverridden { return "Forcé manuellement jusqu'au prochain changement" }
+        if prefs.appearanceChoice != .auto { return "Forcé : Auto reprend le suivi" }
         switch prefs.scheduleMode {
         case .manual:
             return "Mode manuel"
@@ -64,9 +64,10 @@ struct MenuContentView: View {
     }
 
     private var appearancePicker: some View {
-        Picker("Apparence", selection: Binding(get: { engine.isDark }, set: { engine.setAppearance(dark: $0) })) {
-            Label("Clair", systemImage: "sun.max.fill").tag(false)
-            Label("Sombre", systemImage: "moon.fill").tag(true)
+        Picker("Apparence", selection: Binding(get: { prefs.appearanceChoice }, set: { engine.setAppearance($0) })) {
+            Label("Clair", systemImage: "sun.max.fill").tag(AppearanceChoice.light)
+            Label("Sombre", systemImage: "moon.fill").tag(AppearanceChoice.dark)
+            Label("Auto", systemImage: "circle.lefthalf.filled").tag(AppearanceChoice.auto)
         }
         .pickerStyle(.segmented)
         .labelsHidden()

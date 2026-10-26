@@ -31,14 +31,14 @@ Tick order:
 1. Today's solar times; location refresh if older than 6 h.
 2. Weather: new request every 30 minutes. The **first forecast of the day** sets the "dark day" decision, so the screen does not flip with every update.
 3. Ambient light: sensor read every 30 seconds, then hysteresis (dark threshold, light threshold) and confirmation delay.
-4. Appearance: state planned by the schedule, then any manual override.
+4. Appearance: state planned by the schedule, unless the user pinned light or dark.
 5. Wallpaper matching the mode, applied only when it changed.
 6. Warmth: factor 0 → 1 fading in from the start time, then 1 → 0 after sunrise.
 7. Keyboard shortcuts, registered or removed according to the setting.
 
-### Manual override
+### Manual choice
 
-A toggle from the menu, the shortcut or System Settings creates an **override**. The schedule state at the time of the toggle is remembered; the override drops as soon as the schedule changes state (sunrise, sunset, dark day, lux threshold crossed). Warmth works the same way.
+The menu picker offers light, dark and **auto**. Light and dark are persisted (`Preferences.appearanceChoice`) and hold until auto is picked again; so does the shortcut, and so does a change made in System Settings that differs from the schedule. Auto follows the schedule (sun, hours, light sensor). Warmth keeps a transient **override** instead: it remembers the schedule state at the time of the toggle and drops as soon as the schedule changes state (sunrise, sunset, dark day, lux threshold crossed).
 
 ### Fallbacks
 

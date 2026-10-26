@@ -19,7 +19,7 @@ Website: [no-bleeding-eyes.lepee.dev](https://no-bleeding-eyes.lepee.dev)
 - **Ambient light (Home Assistant)**: a lux sensor drives the appearance. Two thresholds (hysteresis) and a confirmation delay prevent flicker. Falls back to the sun when the sensor goes silent for 10 minutes. The token is stored in the Keychain.
 - **Wallpapers**: one for light mode, one for dark mode, applied to every display.
 - **Evening warmth**: a gradual shift from 6500 K to the temperature you pick (down to 1900 K), at sunset, at a fixed time or all the time; back to neutral after sunrise. Rendered through gamma tables, or through an overlay for displays that ignore gamma. Night Shift is paused meanwhile so filters do not stack.
-- **Global shortcuts**: `⌃⌥⌘D` toggles light / dark, `⌃⌥⌘W` toggles warmth. A manual toggle (or a change made in System Settings) holds until the next scheduled change.
+- **Global shortcuts**: `⌃⌥⌘D` toggles light / dark, `⌃⌥⌘W` toggles warmth. The menu picker has three states: light, dark, or auto (follows the sun, the hours or the light sensor). Picking light or dark pins it until you pick auto again; so does a toggle or a change made in System Settings.
 - Launch at login, multiple displays, no account, no telemetry.
 
 The interface is in French for now.
